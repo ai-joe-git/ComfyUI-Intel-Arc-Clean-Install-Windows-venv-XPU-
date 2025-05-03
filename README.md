@@ -22,26 +22,23 @@ You get:
 ---
 
 ## Compatibility
-
-**This setup is tested and confirmed to work with:**
+... **This setup is tested and confirmed to work with:**
 
 | GPU Type                      | Supported | Notes                                                                                      |
 |-------------------------------|-----------|--------------------------------------------------------------------------------------------|
 | Intel Arc (A-Series)          | ✅ Yes    | Full support with PyTorch XPU. (e.g. Arc A770, A750, A580, A380, A310)                     |
 | Intel Arc Pro (Workstation)   | ✅ Yes    | Same as above.                                                                             |
 | Intel Ultra Core iGPU         | ✅ Yes    | Supported via PyTorch XPU (e.g. Intel Core Ultra 5/7/9 Meteor Lake NPU/iGPU).              |
-| Intel Iris Xe (integrated)    | ⚠️ Partial| Experimental, limited or no support in current PyTorch XPU builds. May fallback to CPU.     |
-| Intel UHD (older iGPU)        | ❌ No     | Not supported for AI acceleration, CPU-only fallback.                                      |
+| Intel Iris Xe (integrated)    | ⚠️ Partial| Experimental, limited or no support in current PyTorch XPU builds. May fallback to CPU.     |... | Intel UHD (older iGPU)        | ❌ No     | Not supported for AI acceleration, CPU-only fallback.                                      |
 | NVIDIA (GTX/RTX)              | ✅ Yes    | Use the official CUDA/Windows portable or conda install.                                   |
 | AMD Radeon (RDNA/ROCm)        | ⚠️ Partial| ROCm support is limited and not recommended for most users.                                 |
 | CPU only                      | ✅ Yes    | Works, but extremely slow for image/video generation.                                      |
 
 **Intel Ultra Core iGPU Support:**  
-- Intel Ultra Core (Meteor Lake, “Core Ultra 5/7/9” etc.) iGPUs are supported with this guide, as they use the same PyTorch XPU backend as Intel Arc discrete GPUs.
+- Intel Ultra Core (Meteor Lake, "Core Ultra 5/7/9" etc.) iGPUs are supported with this guide, as they use the same PyTorch XPU backend as Intel Arc discrete GPUs.
 - You do **not** need a discrete Arc GPU; the integrated GPU in Intel Ultra Core CPUs will be used if present and drivers are up to date.
 - Performance will be lower than Arc A-series, but you get full node-based ComfyUI functionality.
-
-**Intel Iris Xe and UHD Graphics:**  
+... **Intel Iris Xe and UHD Graphics:**  
 - Intel Iris Xe iGPU support is experimental. Some features may not work or may fall back to CPU.
 - Intel UHD Graphics (older iGPUs) are **not supported** for AI acceleration, and ComfyUI will use CPU only.
 
@@ -68,8 +65,7 @@ You get:
 ---
 
 ### 2. Installation
-
-Save the following as `install_comfyui_venv.bat` and run it (double-click or right-click > Run as administrator):
+... Save the following as `install_comfyui_venv.bat` and run it (double-click or right-click > Run as administrator):
 
 ```batch
 @echo off
@@ -102,8 +98,7 @@ pip install --pre torch torchvision torchaudio --index-url https://download.pyto
 
 REM 9. Upgrade to the latest official ComfyUI frontend
 pip install --upgrade comfyui-frontend-package
-
-REM 10. Show torch version for confirmation
+... REM 10. Show torch version for confirmation
 python -c "import torch; print('Torch version:', torch.__version__)"
 
 echo.
@@ -140,8 +135,7 @@ pause
 Save this as `install_comfyui_manager_venv.bat` and run it after installing ComfyUI:
 
 ```batch
-@echo off
-REM Activate the venv
+@echo off... REM Activate the venv
 cd /d C:\ComfyUI
 call comfyui_venv\Scripts\activate.bat
 
@@ -168,12 +162,86 @@ pause
 
 ---
 
+### 5. (Optional) Install SageAttention Compatibility Layer
+
+Save this as `install_sageattention_compatibility.bat` and run it if you need SageAttention compatibility:
+
+```batch
+@echo off
+REM Activate the venv
+cd /d C:\ComfyUI
+call comfyui_venv\Scripts\activate.bat
+
+echo ====================================
+echo Installing SageAttention compatibility layer for Intel XPU
+echo ====================================
+
+REM Create the proper directory structure
+cd custom_nodes
+IF EXIST sageattention (
+    rd /s /q sageattention
+)
+mkdir sageattention
+
+REM Create a single __init__.py file with all the necessary code
+echo import torch > sageattention\__init__.py
+echo from torch import nn >> sageattention\__init__.py
+echo. >> sageattention\__init__.py
+echo class SageAttention(nn.Module): >> sageattention\__init__.py
+echo     def __init__(self, *args, **kwargs): >> sageattention\__init__.py
+echo         super().__init__() >> sageattention\__init__.py
+echo     def forward(self, x): >> sageattention\__init__.py
+echo         return x >> sageattention\__init__.py
+echo. >> sageattention\__init__.py
+echo def sageattn(*args, **kwargs): >> sageattention\__init__.py
+echo     return None >> sageattention\__init__.py
+echo. >> sageattention\__init__.py
+echo class SageAttentionNode: >> sageattention\__init__.py
+echo     @classmethod >> sageattention\__init__.py
+echo     def INPUT_TYPES(s): >> sageattention\__init__.py
+echo         return {"required": {"tensor": ("TENSOR",)}} >> sageattention\__init__.py
+echo     RETURN_TYPES = ("TENSOR",) >> sageattention\__init__.py
+echo     FUNCTION = "forward" >> sageattention\__init__.py
+echo     CATEGORY = "advanced" >> sageattention\__init__.py
+echo. >> sageattention\__init__.py
+echo     def forward(self, tensor): >> sageattention\__init__.py
+echo         return (tensor,) >> sageattention\__init__.py
+echo. >> sageattention\__init__.py
+echo NODE_CLASS_MAPPINGS = { >> sageattention\__init__.py
+echo     "SageAttention": SageAttentionNode >> sageattention\__init__.py
+echo } >> sageattention\__init__.py
+echo. >> sageattention\__init__.py
+echo print("SageAttention XPU compatibility layer loaded") >> sageattention\__init__.py
+
+echo.
+echo ====================================
+echo SageAttention compatibility layer installed!
+echo This allows ComfyUI to run without errors when SageAttention is requested.
+echo Note: This does not provide actual SageAttention functionality.
+echo ====================================
+pause
+```
+
+---
+
+## SageAttention Compatibility
+
+Some workflows and custom nodes require SageAttention, which is primarily designed for NVIDIA GPUs with CUDA support. For Intel XPU users, this repository includes a compatibility layer:
+
+- Run `install_sageattention_compatibility.bat` to install a lightweight compatibility layer
+- This allows workflows that expect SageAttention to run without errors
+- Note that this is a pass-through implementation that doesn't provide the actual attention mechanism
+- The compatibility layer prevents errors while still leveraging Intel XPU for the rest of the pipeline
+
+This approach is particularly useful when working with workflows designed for NVIDIA GPUs that you want to run on Intel hardware.
+
+---
+
 ## Notes
 
 - After installation, copy your `models`, `custom_nodes`, and `workflows` folders into `C:\ComfyUI` if needed.
 - Only use custom nodes that are compatible with Intel Arc/XPU (not CUDA-only).
-- If you see `Torch version: ...+xpu` and `Device: xpu` in the ComfyUI log, you are using Intel Arc or Intel Ultra Core iGPU acceleration.
-- No need to manually patch `model_management.py` with this setup.
+- If you see `Torch version: ...+xpu` and `Device: xpu` in the ComfyUI log, you are using Intel Arc or Intel Ultra Core iGPU acceleration.... - No need to manually patch `model_management.py` with this setup.
 - To update ComfyUI or the frontend, simply re-run the install batch.
 
 ---
@@ -194,8 +262,7 @@ pause
 
 - [ComfyUI Official GitHub](https://github.com/comfyanonymous/ComfyUI)
 - [Intel Arc Graphics Thread (ComfyUI)](https://github.com/comfyanonymous/ComfyUI/discussions/476)
-- [ComfyUI install guide and benchmarks on Intel Arc (Reddit)](https://www.reddit.com/r/IntelArc/comments/1hhkbhs/comfyui_install_guide_and_sample_benchmarks_on/)
-- [How to Install and Run ComfyUI on Intel Arc - YTECHB](https://www.ytechb.com/how-to-install-and-run-comfyui-on-intel-arc/)
+- [ComfyUI install guide and benchmarks on Intel Arc (Reddit)](https://www.reddit.com/r/IntelArc/comments/1hhkbhs/comfyui_install_guide_and_sample_benchmarks_on/)... - [How to Install and Run ComfyUI on Intel Arc - YTECHB](https://www.ytechb.com/how-to-install-and-run-comfyui-on-intel-arc/)
 - [Tech Craft: Install and control ComfyUI on PCs with Intel Arc GPUs (YouTube)](https://www.youtube.com/watch?v=fQKOJVVi44E)
 - [ComfyUI Windows venv/conda install tutorial](https://comfyui.org/en/comfyui-windows-conda-venv)
 
@@ -216,25 +283,19 @@ Inspired by the Intel Arc and ComfyUI communities.
 
 **Share these scripts and this README to help other Intel Arc and Intel Ultra Core users enjoy a smooth ComfyUI experience!**
 
+Citations:[1] https://github.com/ai-joe-git[2] https://www.reddit.com/r/IntelArc/comments/1hhkbhs/comfyui_install_guide_and_sample_benchmarks_on/[3] https://comfyui.org/en/comfyui-windows-conda-venv[4] https://github.com/eli64s/readme-ai[5] https://github.com/comfyanonymous/ComfyUI/discussions/476...[6] https://www.youtube.com/watch?v=fQKOJVVi44E[7] https://www.ytechb.com/how-to-install-and-run-comfyui-on-intel-arc/[8] https://www.youtube.com/watch?v=iK02IBeehT8[9] https://www.youtube.com/watch?v=n2KM9ipvhaw[10] https://docs.comfy.org/get_started/introduction[11] https://benhouston3d.com/blog/crafting-readmes-for-ai[12] https://community.intel.com/t5/Intel-ARC-Graphics/Need-Step-by-step-tutorial-newbie-how-to-install-comfyui-to-run/td-p/1576043[13] https://www.youtube.com/watch?v=z5Y9L31ug4E https://www.reddit.com/r/comfyui/comments/1hhkx8l/comfyui_install_guide_and_sample_benchmarks_on/ https://www.dhiwise.com/post/how-to-write-a-readme-that-stands-out-in-best-practices https://www.reddit.com/r/LocalLLaMA/comments/1hhkb4s/comfyui_install_guide_and_sample_benchmarks_on/?tl=fr https://www.reddit.com/r/comfyui/comments/1bf7aoz/python_virtual_environments_for_comfyui/ https://docs.comfy.org/installation/system_requirements... https://www.reddit.com/r/ChatGPTCoding/comments/1hg8m52/best_practices_for_converting_documentation_to/ https://github.com/comfyanonymous/ComfyUI/blob/master/README.md https://comfyui-wiki.com/en/install/install-comfyui/install-comfyui-on-windows
+
 Citations:
-[1] https://github.com/ai-joe-git
-[2] https://www.reddit.com/r/IntelArc/comments/1hhkbhs/comfyui_install_guide_and_sample_benchmarks_on/
-[3] https://comfyui.org/en/comfyui-windows-conda-venv
-[4] https://github.com/eli64s/readme-ai
-[5] https://github.com/comfyanonymous/ComfyUI/discussions/476
-[6] https://www.youtube.com/watch?v=fQKOJVVi44E
-[7] https://www.ytechb.com/how-to-install-and-run-comfyui-on-intel-arc/
-[8] https://www.youtube.com/watch?v=iK02IBeehT8
-[9] https://www.youtube.com/watch?v=n2KM9ipvhaw
-[10] https://docs.comfy.org/get_started/introduction
-[11] https://benhouston3d.com/blog/crafting-readmes-for-ai
-[12] https://community.intel.com/t5/Intel-ARC-Graphics/Need-Step-by-step-tutorial-newbie-how-to-install-comfyui-to-run/td-p/1576043
-[13] https://www.youtube.com/watch?v=z5Y9L31ug4E
-[14] https://www.reddit.com/r/comfyui/comments/1hhkx8l/comfyui_install_guide_and_sample_benchmarks_on/
-[15] https://www.dhiwise.com/post/how-to-write-a-readme-that-stands-out-in-best-practices
-[16] https://www.reddit.com/r/LocalLLaMA/comments/1hhkb4s/comfyui_install_guide_and_sample_benchmarks_on/?tl=fr
-[17] https://www.reddit.com/r/comfyui/comments/1bf7aoz/python_virtual_environments_for_comfyui/
-[18] https://docs.comfy.org/installation/system_requirements
-[19] https://www.reddit.com/r/ChatGPTCoding/comments/1hg8m52/best_practices_for_converting_documentation_to/
-[20] https://github.com/comfyanonymous/ComfyUI/blob/master/README.md
-[21] https://comfyui-wiki.com/en/install/install-comfyui/install-comfyui-on-windows
+[1] https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/22300945/eb4de1d3-2fdf-4a98-9132-9b52280c51a1/paste.txt
+[2] https://www.reddit.com/r/IntelArc/comments/1kcp87r/guiderelease_clean_uptodate_comfyui_install_for/
+[3] https://www.reddit.com/r/comfyui/comments/1kcojyl/guiderelease_clean_uptodate_comfyui_install_for/
+[4] https://github.com/comfyanonymous/ComfyUI/discussions/476
+[5] https://github.com/Stability-AI/InternalForkComfyUI/blob/master/README.md
+[6] https://community.intel.com/t5/Intel-ARC-Graphics/Need-Step-by-step-tutorial-newbie-how-to-install-comfyui-to-run/td-p/1576043
+[7] https://cnb.cool/123123113322/comfy2222222222222222221/-/blob/master/README.md
+[8] https://game.intel.com/fr/stories/comfyui-vs-fooocus-for-genai-on-intel-arc-gpus/
+[9] https://www.reddit.com/r/comfyui/controversial/
+[10] https://docs.comfy.org/installation/desktop/macos
+[11] https://www.youtube.com/watch?v=fQKOJVVi44E
+[12] https://www.youtube.com/watch?v=iK02IBeehT8
+[13] https://github.com/kijai/ComfyUI-HunyuanVideoWrapper/issues/343
