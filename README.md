@@ -224,6 +224,102 @@ pause
 
 ---
 
+
+### 6. Update
+Save this as `update_comfyUI_xpu_intel.bat` and run it to Update:
+
+```batch
+@echo off
+echo ===== ComfyUI Installer/Updater =====
+
+REM Check if ComfyUI is already installed
+IF NOT EXIST "C:\ComfyUI" (
+    REM === Original installation script ===
+    REM === [OPTIONAL] Remove old ComfyUI folder for a clean install ===
+    REM rmdir /s /q C:\ComfyUI
+
+    REM 1. Clone the latest version of ComfyUI
+    git clone https://github.com/comfyanonymous/ComfyUI.git C:\ComfyUI
+
+    REM 2. Go to ComfyUI folder
+    cd /d C:\ComfyUI
+
+    REM 3. Create an isolated Python venv
+    python -m venv comfyui_venv
+
+    REM 4. Activate the venv
+    call comfyui_venv\Scripts\activate.bat
+
+    REM 5. Update pip
+    python -m pip install --upgrade pip
+
+    REM 6. Install base dependencies
+    pip install -r requirements.txt
+
+    REM 7. Uninstall any previous torch version
+    pip uninstall -y torch torchvision torchaudio
+
+    REM 8. Install Intel Arc optimized torch (XPU)
+    pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/xpu
+
+    REM 9. Update ComfyUI frontend to the latest official version (optional)
+    pip install --upgrade comfyui-frontend-package
+
+    REM 10. Check installed torch version (should display +xpu)
+    python -c "import torch; print('Torch version:', torch.__version__)"
+
+    echo.
+    echo ==========================
+    echo Installation complete!
+    echo If torch version shows +xpu, you're ready to go.
+    echo You can now launch ComfyUI with the startup batch.
+    echo ==========================
+) ELSE (
+    REM === Update script ===
+    echo ComfyUI is already installed. Updating...
+    
+    REM 1. Go to ComfyUI folder
+    cd /d C:\ComfyUI
+
+    REM 2. Activate the venv
+    call comfyui_venv\Scripts\activate.bat
+
+    REM 3. Pull the latest changes from GitHub
+    echo Updating ComfyUI core...
+    git pull
+
+    REM 4. Update pip
+    echo Updating pip...
+    python -m pip install --upgrade pip
+
+    REM 5. Update dependencies
+    echo Updating dependencies...
+    pip install -r requirements.txt
+
+    REM 6. Update torch (keeping Intel XPU version)
+    echo Updating PyTorch...
+    pip install --upgrade --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/xpu
+
+    REM 7. Update frontend to latest version
+    echo Updating ComfyUI frontend...
+    pip install --upgrade comfyui-frontend-package
+
+    REM 8. Check torch version
+    echo Checking torch version...
+    python -c "import torch; print('Torch version:', torch.__version__)"
+
+    echo.
+    echo ==========================
+    echo Update complete!
+    echo If torch version shows +xpu, you're ready to go.
+    echo ==========================
+)
+
+pause
+```
+
+---
+
 ## SageAttention Compatibility
 
 Some workflows and custom nodes require SageAttention, which is primarily designed for NVIDIA GPUs with CUDA support. For Intel XPU users, this repository includes a compatibility layer:
@@ -242,7 +338,7 @@ This approach is particularly useful when working with workflows designed for NV
 - After installation, copy your `models`, `custom_nodes`, and `workflows` folders into `C:\ComfyUI` if needed.
 - Only use custom nodes that are compatible with Intel Arc/XPU (not CUDA-only).
 - If you see `Torch version: ...+xpu` and `Device: xpu` in the ComfyUI log, you are using Intel Arc or Intel Ultra Core iGPU acceleration.... - No need to manually patch `model_management.py` with this setup.
-- To update ComfyUI or the frontend, simply re-run the install batch.
+- To update ComfyUI or the frontend, simply run the Update batch.
 
 ---
 
