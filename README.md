@@ -361,6 +361,117 @@ This approach is particularly useful when working with workflows designed for NV
 
 ---
 
+# Fix TorchAudio/TorchCodec audio save errors on Windows (Intel XPU)
+
+TorchAudio 2.9+ routes torchaudio.save through TorchCodec, which dynamically links FFmpeg; without compatible shared FFmpeg DLLs, audio nodes fail with “Could not load libtorchcodec…”. [1]
+TorchCodec supports FFmpeg major versions 4–7, so using a shared 7.1 build or bypassing TorchCodec with a sitecustomize patch resolves the problem while keeping the XPU stack. [2]
+
+## Symptoms
+- Node errors mentioning “Could not load libtorchcodec” and attempts to load libtorchcodec_core7/6/5/4.dll when torchaudio.save is called. [1]
+- Environments with only ffmpeg.exe (static) or FFmpeg 8.x on PATH reproduce the failure because TorchCodec needs shared DLLs within the 4–7 range. [1][2]
+
+## Root cause
+- In 2.9, torchaudio.save relies on save_with_torchcodec, which uses TorchCodec’s AudioEncoder backed by FFmpeg’s shared libraries at runtime. [1][3]
+- TorchCodec documents support for FFmpeg versions in [4][2], so 8.x builds or exe‑only installs cannot satisfy the loader. [2]
+
+## Solution A (recommended): Install FFmpeg 7.1 shared and prepend bin to PATH
+1) Install a Windows “shared” FFmpeg 7.1 build (contains avcodec‑61.dll, avformat‑61/60, avutil‑59), and extract it so DLLs are in C:\ffmpeg7\bin. [5]
+2) Edit the ComfyUI launcher .bat to prepend that bin to PATH before activating the venv and launching Python. [6]
+3) Start ComfyUI via this .bat so the process inherits PATH and TorchCodec can bind to FFmpeg 7.1. [1]
+
+Batch header snippet (add at the very top of the launcher):
+```
+@echo off
+setlocal EnableExtensions
+set FFMPEG_SHARED_DIR=C:\ffmpeg7\bin
+if not exist C:\ffmpeg7\bin\avcodec-61.dll goto fferr
+set PATH=%FFMPEG_SHARED_DIR%;%PATH%
+echo Using FFmpeg bin: %FFMPEG_SHARED_DIR%
+```
+Error label (place at end of file):
+```
+:fferr
+echo ERROR: Missing C:\ffmpeg7\bin\avcodec-61.dll (FFmpeg 7.x shared required by TorchCodec)
+pause
+exit /b 1
+```
+- Why it works: torchaudio.save delegates to TorchCodec, which loads FFmpeg through the process PATH, and FFmpeg 7.x matches TorchCodec’s supported range. [1][2]
+
+## Solution B (alternative): Bypass TorchCodec via sitecustomize while keeping XPU
+- Python auto‑imports a module named sitecustomize at interpreter startup if it is on sys.path; use this hook to replace torchaudio.save with a SoundFile‑based writer. [7]
+- This avoids TorchCodec entirely for saving audio and keeps the Intel XPU Torch stack unchanged for GPU workflows. [7][1]
+
+Steps:
+1) Install SoundFile in the ComfyUI venv. [8]
+- C:\ComfyUI\comfyui_venv\Scripts\python.exe -m pip install soundfile [8]
+2) Create C:\ComfyUI\user\sitecustomize.py with the patch below. [7]
+3) Ensure the launcher adds the user folder to PYTHONPATH before launching Python so sitecustomize is found. [9]
+
+Add once near the top of the launcher:
+```
+set PYTHONPATH=C:\ComfyUI\user;%PYTHONPATH%
+```
+
+C:\ComfyUI\user\sitecustomize.py:
+```
+# Bypass TorchCodec by replacing torchaudio.save with a SoundFile-based writer.
+
+import numpy as np
+try:
+    import torchaudio
+    import soundfile as sf
+    import torch
+except Exception:
+    torchaudio = None
+
+def _save_with_soundfile(uri, src, sample_rate, channels_first=True, **kwargs):
+    t = src.detach().to("cpu")
+    if t.dim() == 1:
+        arr = t.contiguous().numpy()
+    else:
+        arr = t.transpose(0,1).contiguous().numpy() if channels_first else t.contiguous().numpy()
+    sf.write(uri, arr, int(sample_rate))
+
+if torchaudio is not None:
+    try:
+        torchaudio.save = _save_with_soundfile
+        try:
+            import torchaudio._torchcodec as _tc  # type: ignore
+            _tc.save_with_torchcodec = _save_with_soundfile
+        except Exception:
+            pass
+    except Exception:
+        pass
+```
+- Why it works: sitecustomize is imported automatically on interpreter startup, allowing a global override without modifying nodes, and SoundFile writes common audio formats directly. [7][8]
+
+## Verification
+- Import test: C:\ComfyUI\comfyui_venv\Scripts\python.exe -c "from torchcodec.encoders import AudioEncoder; print('encoders ok')" (Solution A) should succeed when FFmpeg 7.1 DLLs are visible. [2]
+- Save test: write a 1‑second WAV via torchaudio.save; it succeeds with either Solution A (TorchCodec path) or Solution B (SoundFile patch). [1]
+
+Save test example:
+```
+C:\ComfyUI\comfyui_venv\Scripts\python.exe - << "PY"
+import math, torch, torchaudio
+sr=16000; t=torch.arange(0,sr,dtype=torch.float32)/sr
+wav=(0.2*torch.sin(2*math.pi*440*t)).unsqueeze(0)
+torchaudio.save(r"C:\ComfyUI\user\test.wav", wav, sr)
+print("saved ok")
+PY
+```
+- If the process still errors, ensure the launcher is used (so PATH/PYTHONPATH apply) and confirm avcodec‑61.dll exists in the configured C:\ffmpeg7\bin. [6]
+
+## Notes and pitfalls
+- FFmpeg 8.x is outside TorchCodec’s supported window and will continue to fail even if present on PATH; prefer a 7.1 shared build. [2]
+- Torchaudio 2.9’s migration means legacy backend parameters to save() are ignored, reinforcing the need for TorchCodec or a deliberate bypass. [1][3]
+- Temporary PATH edits with setlocal + set PATH affect only the launcher’s process and are the safest method to expose DLLs without changing the system. [6]
+
+## References
+- Torchaudio save_with_torchcodec and 2.9 migration notes. [1][3]
+- TorchCodec FFmpeg support window and version alignment. [2][10]
+- FFmpeg 7.1 shared builds for Windows (win64 shared). [5][11]
+- Python site / sitecustomize behavior and using PYTHONPATH to ensure pickup. [7][9]
+
 ## Troubleshooting
 
 - **If you see `Device: cpu` and not `xpu`:**
