@@ -438,4 +438,37 @@ If these scripts helped you, please:
 
 ---
 
+## 🔧 Repair/Update PyTorch XPU
+
+If you experience issues with PyTorch or want to update to the latest nightly build:
+
+### When to use:
+- PyTorch XPU not detecting your Intel Arc GPU
+- After updating Intel Graphics drivers
+- ComfyUI showing "Device: cpu" instead of "xpu"
+- Upgrading to latest PyTorch nightly build
+- Fixing corrupted PyTorch installation
+
+### How to use:
+
+1. Close ComfyUI if running
+2. Run `REPAIR_PyTorch_XPU.bat`
+3. Wait for installation to complete (~5-10 minutes)
+4. Verify XPU is detected in the output
+5. Run `START_ComfyUI.bat` to test
+
+### Expected Output:
+
+PyTorch Version: 2.11.0.dev20260119+xpu
+XPU Available: True
+GPU Device: Intel(R) Arc(TM) A770 Graphics
+GPU Count: 1
+Triton Version: 3.6.0
+
+text
+
+If you see this, PyTorch XPU is working correctly! ✅
+
+---
+
 **Made with ❤️ for the Intel Arc community**
