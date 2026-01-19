@@ -1,0 +1,35 @@
+# Python
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+ENV/
+comfyui_venv/
+
+# ComfyUI specific
+output/
+input/
+temp/
+models/
+custom_nodes/
+user/
+sycl_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
