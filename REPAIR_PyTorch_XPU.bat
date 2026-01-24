@@ -84,7 +84,7 @@ if errorlevel 1 (
 echo.
 echo [4.5/5] Installing Triton XPU...
 
-pip install pytorch-triton-xpu
+REM Triton XPU is included in PyTorch Nightly, skipping separate install.
 
 if errorlevel 1 (
     echo WARNING: Triton XPU installation failed
@@ -105,7 +105,7 @@ python -c "import torch; xpu_available = hasattr(torch, 'xpu') and torch.xpu.is_
 python -c "import torch; print(''); if hasattr(torch, 'xpu') and torch.xpu.is_available(): print('GPU Device:', torch.xpu.get_device_name(0)); print('GPU Count:', torch.xpu.device_count()); else: print('WARNING: XPU not detected!'); import sys; sys.stdout.flush()" 2>nul
 
 echo.
-python -c "try: import triton; print('Triton Version:', triton.__version__); except: print('Triton: Not available')"
+python -c "import sys; exec('try: import triton; print(triton.__version__)\nexcept: print(\'Not found\')')"
 
 echo.
 echo ================================================================
@@ -130,7 +130,7 @@ if errorlevel 1 (
     echo   3. Try again after driver update
     echo.
     echo Your GPU:
-    wmic path win32_VideoController get name
+    powershell -c "Get-CimInstance -ClassName Win32_VideoController | Select-Object -ExpandProperty Name"
     echo.
     pause
 ) else (

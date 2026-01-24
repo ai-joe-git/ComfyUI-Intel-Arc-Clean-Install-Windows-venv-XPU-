@@ -92,8 +92,12 @@ REM ============================================
 echo.
 echo [VERIFY] Checking Triton integration...
 
+REM Install gguf dependency required for verification
+pip install gguf
+
+REM Stay in folder to avoid import syntax error
+python -c "from dequant import HAS_TRITON, USE_TRITON_KERNELS; print('HAS_TRITON:', HAS_TRITON); print('USE_TRITON_KERNELS:', USE_TRITON_KERNELS); exit(0 if HAS_TRITON and USE_TRITON_KERNELS else 1)"
 cd ..\..
-python -c "from custom_nodes.ComfyUI-GGUF.dequant import HAS_TRITON, USE_TRITON_KERNELS; print('HAS_TRITON:', HAS_TRITON); print('USE_TRITON_KERNELS:', USE_TRITON_KERNELS); exit(0 if HAS_TRITON and USE_TRITON_KERNELS else 1)"
 
 if errorlevel 1 (
     echo.

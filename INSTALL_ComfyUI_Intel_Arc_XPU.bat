@@ -1,5 +1,4 @@
 @echo off
-setlocal EnableDelayedExpansion
 title ComfyUI Intel Arc XPU - Advanced Installation v2.0
 
 echo ================================================================
@@ -10,10 +9,10 @@ echo This installer combines Intel best practices with cutting-edge
 echo PyTorch XPU nightly builds for maximum performance.
 echo.
 echo Features:
-echo   - ComfyUI (latest from official repo)
-echo   - PyTorch 2.11+ XPU Nightly (faster than Intel's 2.5.1)
-echo   - Triton XPU (GGUF acceleration)
-echo   - Python venv (lighter than conda)
+echo   - ComfyUI ^(latest from official repo^)
+echo   - PyTorch 2.11+ XPU Nightly ^(faster than Intel's 2.5.1^)
+echo   - Triton XPU ^(GGUF acceleration^)
+echo   - Python venv ^(lighter than conda^)
 echo   - Visual Studio Build Tools verification
 echo   - Intel XPU environment optimization
 echo.
@@ -34,7 +33,7 @@ where python >nul 2>&1
 if errorlevel 1 (
     echo ERROR: Python not found!
     echo.
-    echo Download Python 3.11 (recommended):
+    echo Download Python 3.11 ^(recommended^):
     echo https://www.python.org/downloads/release/python-3110/
     echo.
     echo Make sure to check "Add Python to PATH" during installation
@@ -43,7 +42,7 @@ if errorlevel 1 (
 )
 
 REM Get Python version
-for /f "tokens=2" %%i in ('python --version 2^>^&1') do set PYTHON_VER=%%i
+for /f "usebackq tokens=2" %%i in (`python --version 2^>^&1`) do set PYTHON_VER=%%i
 echo Found Python: %PYTHON_VER%
 
 python --version | findstr /C:"3.10" /C:"3.11" >nul
@@ -51,7 +50,7 @@ if errorlevel 1 (
     echo WARNING: Python 3.10 or 3.11 recommended for best compatibility
     echo Current version: %PYTHON_VER%
     echo.
-    echo Continue anyway? (Y/N)
+    echo Continue anyway? ^(Y/N^)
     choice /C YN /N
     if errorlevel 2 exit /b 1
 )
@@ -75,23 +74,23 @@ REM ============================================
 echo.
 echo [2/9] Detecting Intel GPU...
 
-wmic path win32_VideoController get name | findstr /i "Arc Iris Xe Intel(R) UHD" >nul
+powershell -c "Get-CimInstance -ClassName Win32_VideoController | Select-Object -ExpandProperty Name" | findstr /i "Arc Iris Xe Intel(R) UHD" >nul
 if errorlevel 1 (
     echo WARNING: No Intel GPU detected!
     echo.
     echo This setup is optimized for:
-    echo   - Intel Arc A-Series (A310, A380, A580, A750, A770)
-    echo   - Intel Core Ultra iGPU (Meteor Lake, Arrow Lake)
+    echo   - Intel Arc A-Series ^(A310, A380, A580, A750, A770^)
+    echo   - Intel Core Ultra iGPU ^(Meteor Lake, Arrow Lake^)
     echo.
     echo Your GPU:
-    wmic path win32_VideoController get name
+    powershell -c "Get-CimInstance -ClassName Win32_VideoController | Select-Object -ExpandProperty Name"
     echo.
-    echo Continue with CPU-only mode? (Y/N)
+    echo Continue with CPU-only mode? ^(Y/N^)
     choice /C YN /N
     if errorlevel 2 exit /b 1
 ) else (
     echo Detected Intel GPU:
-    wmic path win32_VideoController get name | findstr /i "Arc Iris Xe Intel(R) UHD"
+    powershell -c "Get-CimInstance -ClassName Win32_VideoController | Select-Object -ExpandProperty Name" | findstr /i "Arc Iris Xe Intel(R) UHD"
 )
 
 REM ============================================
@@ -134,12 +133,12 @@ if "%MSVC_FOUND%"=="0" (
     echo   2. Install "Desktop development with C++"
     echo   3. Restart PC after installation
     echo.
-    echo Continue without Triton? (ComfyUI will still work)
+    echo Continue without Triton? ^(ComfyUI will still work^)
     choice /C YN /N
     if errorlevel 2 exit /b 1
 ) else (
     echo OK: Visual Studio Build Tools found
-    echo Path: %VCVARS_PATH%
+    echo Path: "%VCVARS_PATH%"
 )
 
 REM ============================================
@@ -153,12 +152,12 @@ if exist "C:\ComfyUI" (
     echo ComfyUI directory already exists: C:\ComfyUI
     echo.
     echo Options:
-    echo   [U] Update existing installation (keeps models/workflows)
-    echo   [F] Fresh install (delete and reinstall)
-    echo   [S] Skip (use existing)
+    echo   [U] Update existing installation ^(keeps models/workflows^)
+    echo   [F] Fresh install ^(delete and reinstall^)
+    echo   [S] Skip ^(use existing^)
     echo.
     choice /C UFS /N /M "Choose option: "
-    
+
     if errorlevel 3 (
         echo Skipping ComfyUI clone...
         cd /d C:\ComfyUI
@@ -167,13 +166,13 @@ if exist "C:\ComfyUI" (
         echo Backing up models and custom_nodes...
         if exist "models" move models models_backup >nul 2>&1
         if exist "custom_nodes" move custom_nodes custom_nodes_backup >nul 2>&1
-        
+
         echo Removing old ComfyUI...
         rmdir /s /q "C:\ComfyUI"
-        
+
         echo Cloning fresh ComfyUI...
         git clone --depth=1 https://github.com/comfyanonymous/ComfyUI.git C:\ComfyUI
-        
+
         cd /d C:\ComfyUI
         if exist "..\models_backup" move ..\models_backup models >nul 2>&1
         if exist "..\custom_nodes_backup" move ..\custom_nodes_backup custom_nodes >nul 2>&1
@@ -206,7 +205,7 @@ echo [5/9] Setting up Python virtual environment...
 if exist "comfyui_venv" (
     echo Virtual environment already exists
     echo.
-    echo Recreate? (Y/N)
+    echo Recreate? ^(Y/N^)
     choice /C YN /N
     if not errorlevel 2 (
         echo Removing old venv...
@@ -239,7 +238,7 @@ REM ============================================
 REM Step 6: Install PyTorch XPU Nightly
 REM ============================================
 echo.
-echo [6/9] Installing PyTorch XPU Nightly (latest bleeding-edge)...
+echo [6/9] Installing PyTorch XPU Nightly ^(latest bleeding-edge^)...
 echo This is NEWER than Intel's official 2.5.1 builds!
 echo.
 
@@ -249,7 +248,7 @@ echo Removing any existing PyTorch installations...
 pip uninstall -y torch torchvision torchaudio intel-extension-for-pytorch
 
 echo.
-echo Installing PyTorch XPU Nightly (2.11+)...
+echo Installing PyTorch XPU Nightly ^(2.11+^)...
 echo This may take 5-10 minutes...
 pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/xpu
 
@@ -289,12 +288,12 @@ echo [8/9] Installing Triton XPU for GGUF acceleration...
 
 if "%MSVC_FOUND%"=="1" (
     pip install pytorch-triton-xpu
-    
+
     echo.
     echo Verifying Triton installation...
     python -c "try: import triton; print('Triton:', triton.__version__); except: print('Triton: Installation pending - will compile on first use')"
 ) else (
-    echo Skipping Triton (no C++ compiler found)
+    echo Skipping Triton ^(no C++ compiler found^)
     echo You can install it later after installing Visual Studio Build Tools
 )
 
@@ -349,7 +348,7 @@ echo Performance Tips:
 echo ================================================================
 echo.
 echo - Use GGUF Q8_0 models for best quality/speed balance
-echo - First GGUF load compiles Triton kernels (~30 sec)
+echo - First GGUF load compiles Triton kernels ^(~30 sec^)
 echo - Update Intel Graphics drivers regularly
 echo - Keep Windows power plan on "High Performance"
 echo.

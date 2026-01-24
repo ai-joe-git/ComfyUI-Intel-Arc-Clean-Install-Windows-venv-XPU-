@@ -30,7 +30,7 @@ pip install --upgrade --pre torch torchvision torchaudio --index-url https://dow
 
 echo.
 echo [3/5] Updating Triton XPU...
-pip install --upgrade pytorch-triton-xpu
+REM Triton XPU is included in PyTorch Nightly, skipping separate install.
 
 echo.
 echo [4/5] Updating Python dependencies...
