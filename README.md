@@ -1,5 +1,5 @@
 # ComfyUI Intel Arc GPU - Complete Installation Suite
-## Windows | Virtual Environment | XPU Backend | Triton Acceleration
+## Windows | Virtual Environment | XPU Backend |
 
 [![Intel Arc](https://img.shields.io/badge/Intel-Arc_GPU-0071C5?logo=intel)](https://www.intel.com/arc)
 [![PyTorch](https://img.shields.io/badge/PyTorch-XPU_Nightly-EE4C2C?logo=pytorch)](https://pytorch.org/)
@@ -13,7 +13,6 @@
 
 - ✅ **One-click installation** - Automated setup with dependency resolution
 - ✅ **Intel Arc optimized** - Native XPU backend with PyTorch nightly builds
-- ✅ **Triton acceleration** - 6-11x faster GGUF model loading and inference
 - ✅ **Isolated environment** - Clean Python venv, no conflicts with other AI tools
 - ✅ **Essential nodes included** - ComfyUI-Manager, GGUF, VideoHelper, Impact Pack
 - ✅ **Always up-to-date** - Scripts pull latest ComfyUI and PyTorch versions
@@ -60,8 +59,7 @@ cd ComfyUI-Intel-Arc-Clean-Install-Windows-venv-XPU-
 ```batch
 1. INSTALL_ComfyUI_Intel_Arc_XPU.bat       # Core installation
 2. INSTALL_Custom_Nodes.bat                 # Essential nodes
-3. INSTALL_GGUF_Triton_Patch.bat           # GGUF acceleration
-4. START_ComfyUI.bat                        # Launch ComfyUI
+3. START_ComfyUI.bat                        # Launch ComfyUI
 ```
 
 ### 3. Access ComfyUI
@@ -85,11 +83,6 @@ Open your browser: **http://127.0.0.1:8188**
 - **ComfyUI-Impact-Pack** - Utility nodes
 - **rgthree-comfy** - Workflow optimization tools
 
-### Performance Optimizations
-- **GGUF Triton Patch** - Accelerated dequantization
-  - Q4_0 models: ~11x faster
-  - Q8_0 models: ~6x faster
-  - Q4_1 models: ~8x faster
 
 ---
 
@@ -101,13 +94,11 @@ Open your browser: **http://127.0.0.1:8188**
 
 **What it does:**
 1. ✓ Verifies Python 3.10/3.11 and Git installation
-2. ✓ Checks for Visual Studio Build Tools (C++ compiler)
-3. ✓ Clones ComfyUI to `C:\ComfyUI`
-4. ✓ Creates isolated Python virtual environment
-5. ✓ Installs PyTorch XPU nightly builds
-6. ✓ Installs Triton XPU for acceleration
-7. ✓ Installs ComfyUI dependencies
-8. ✓ Verifies XPU device detection
+2. ✓ Clones ComfyUI to `C:\ComfyUI`
+3. ✓ Creates isolated Python virtual environment
+4. ✓ Installs PyTorch XPU nightly builds
+5. ✓ Installs ComfyUI dependencies
+6. ✓ Verifies XPU device detection
 
 **Expected output:**
 ```
@@ -138,20 +129,8 @@ Device: Intel(R) Arc(TM) A770 Graphics (16GB)
 
 **What it does:**
 1. ✓ Verifies ComfyUI-GGUF node is installed
-2. ✓ Downloads latest Triton patch from this repo
 3. ✓ Applies patch to enable GPU-accelerated dequantization
 4. ✓ Verifies Triton kernels are active
-
-**Performance improvements:**
-
-| Model Type | Without Triton | With Triton | Speedup |
-|------------|----------------|-------------|---------|
-| Q4_0 GGUF | Slow PyTorch | Triton kernel | ~11x faster |
-| Q8_0 GGUF | Slow PyTorch | Triton kernel | ~6x faster |
-| Q4_1 GGUF | Slow PyTorch | Triton kernel | ~8x faster |
-| Q4_K_M | PyTorch | PyTorch | No change* |
-
-*K-quants (Q4_K_M, Q5_K_M, Q6_K) not yet accelerated by this patch.
 
 ### Script 4: Launch ComfyUI
 
@@ -210,7 +189,6 @@ Device: Intel(R) Arc(TM) A770 Graphics (16GB)
 Run `UPDATE_ComfyUI.bat` to update:
 - ComfyUI core
 - PyTorch XPU nightly
-- Triton XPU
 - All custom nodes
 - Python dependencies
 
@@ -271,24 +249,10 @@ If False:
 - Reduce resolution or batch size
 - Close other GPU applications
 
-### Issue: Triton kernels not working
-
-**Verify Triton:**
-```batch
-cd C:\ComfyUI
-call comfyui_venv\Scripts\activate.bat
-python -c "from custom_nodes.ComfyUI-GGUF.dequant import HAS_TRITON; print('Triton:', HAS_TRITON)"
-```
-
-If False:
-```batch
-pip install pytorch-triton-xpu --force-reinstall
-```
 
 ### Issue: Slow performance compared to expected
 
 **Checklist:**
-- ✓ Triton patch applied? Check ComfyUI console for "Triton available, enabling optimized kernels"
 - ✓ Using GGUF Q8_0/Q4_0 models for acceleration?
 - ✓ GPU utilization at 100%? Check Task Manager
 - ✓ Power plan set to "High Performance"?
@@ -304,7 +268,6 @@ pip install pytorch-triton-xpu --force-reinstall
 |----------|--------------|-----|
 | **Best Quality** | GGUF Q8_0 | Minimal quality loss, 6x faster with Triton |
 | **Balanced** | GGUF Q4_K_M | Good quality, smaller size |
-| **Maximum Speed** | GGUF Q4_0 | 11x faster with Triton, acceptable quality |
 | **Full Precision** | FP16/BF16 | Highest quality, largest size, slowest |
 
 ### Memory Management
@@ -423,7 +386,6 @@ If these scripts helped you, please:
 ## 🚀 What's New
 
 ### January 2026
-- ✅ Triton XPU integration for GGUF acceleration
 - ✅ Automated patch installer with GitHub download
 - ✅ Visual Studio Build Tools detection
 - ✅ PyTorch 2.11+ nightly XPU builds
@@ -431,7 +393,6 @@ If these scripts helped you, please:
 - ✅ Performance improvements for Q8_0/Q4_0 models
 
 ### Coming Soon
-- 🔄 K-quant Triton kernels (Q4_K_M, Q5_K_M)
 - 🔄 Automatic model downloader
 - 🔄 ComfyUI Portable build option
 - 🔄 Docker container for Intel Arc
