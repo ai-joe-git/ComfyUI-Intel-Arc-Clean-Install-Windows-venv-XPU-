@@ -123,21 +123,11 @@ Device: Intel(R) Arc(TM) A770 Graphics (16GB)
 - ComfyUI-Impact-Pack (ltdrdata)
 - rgthree-comfy (rgthree)
 
-### Script 3: GGUF Triton Patch
-
-`INSTALL_GGUF_Triton_Patch.bat`
-
-**What it does:**
-1. ✓ Verifies ComfyUI-GGUF node is installed
-3. ✓ Applies patch to enable GPU-accelerated dequantization
-4. ✓ Verifies Triton kernels are active
-
-### Script 4: Launch ComfyUI
+### Script 3: Launch ComfyUI
 
 `START_ComfyUI.bat`
 
 **What it does:**
-- Initializes Visual Studio C++ environment for Triton
 - Sets Intel XPU environment variables
 - Activates Python virtual environment
 - Launches ComfyUI with optimized flags
