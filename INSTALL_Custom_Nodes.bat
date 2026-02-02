@@ -89,6 +89,6 @@ echo ================================================================
 echo Custom Nodes Installation Complete!
 echo ================================================================
 echo.
-echo Next: Run INSTALL_GGUF_Triton_Patch.bat for GGUF acceleration
+echo Next: Run START_ComfyUI.bat to launch ComfyUI with the new nodes.
 echo ================================================================
 pause

@@ -26,7 +26,7 @@ REM ============================================
 REM Step 1: System Checks
 REM ============================================
 echo.
-echo [1/9] Performing system checks...
+echo [1/7] Performing system checks...
 
 REM Check Python
 where python >nul 2>&1
@@ -72,7 +72,7 @@ REM ============================================
 REM Step 2: Check Intel GPU
 REM ============================================
 echo.
-echo [2/9] Detecting Intel GPU...
+echo [2/7] Detecting Intel GPU...
 
 powershell -c "Get-CimInstance -ClassName Win32_VideoController | Select-Object -ExpandProperty Name" | findstr /i "Arc Iris Xe Intel(R) UHD" >nul
 if errorlevel 1 (
@@ -93,59 +93,12 @@ if errorlevel 1 (
     powershell -c "Get-CimInstance -ClassName Win32_VideoController | Select-Object -ExpandProperty Name" | findstr /i "Arc Iris Xe Intel(R) UHD"
 )
 
-REM ============================================
-REM Step 3: Check Visual Studio Build Tools
-REM ============================================
-echo.
-echo [3/9] Checking C++ compiler for Triton GGUF acceleration...
-
-set "MSVC_FOUND=0"
-set "VCVARS_PATH="
-
-REM Check multiple VS2022 installation paths
-if exist "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat" (
-    set "MSVC_FOUND=1"
-    set "VCVARS_PATH=C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-)
-if exist "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat" (
-    set "MSVC_FOUND=1"
-    set "VCVARS_PATH=C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
-)
-if exist "C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Auxiliary\Build\vcvars64.bat" (
-    set "MSVC_FOUND=1"
-    set "VCVARS_PATH=C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Auxiliary\Build\vcvars64.bat"
-)
-if exist "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" (
-    set "MSVC_FOUND=1"
-    set "VCVARS_PATH=C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-)
-
-if "%MSVC_FOUND%"=="0" (
-    echo.
-    echo WARNING: Visual Studio Build Tools not found!
-    echo.
-    echo Triton GGUF acceleration requires C++ compiler:
-    echo   - 6-11x faster GGUF model loading
-    echo   - Required for Q4_0, Q8_0 optimization
-    echo.
-    echo Download: https://visualstudio.microsoft.com/downloads/
-    echo   1. Select "Build Tools for Visual Studio 2022"
-    echo   2. Install "Desktop development with C++"
-    echo   3. Restart PC after installation
-    echo.
-    echo Continue without Triton? ^(ComfyUI will still work^)
-    choice /C YN /N
-    if errorlevel 2 exit /b 1
-) else (
-    echo OK: Visual Studio Build Tools found
-    echo Path: "%VCVARS_PATH%"
-)
 
 REM ============================================
-REM Step 4: Clone/Update ComfyUI
+REM Step 3: Clone/Update ComfyUI
 REM ============================================
 echo.
-echo [4/9] Setting up ComfyUI repository...
+echo [3/7] Setting up ComfyUI repository...
 
 if exist "C:\ComfyUI" (
     echo.
@@ -197,10 +150,10 @@ if exist "C:\ComfyUI" (
 echo OK: ComfyUI repository ready
 
 REM ============================================
-REM Step 5: Create Virtual Environment
+REM Step 4: Create Virtual Environment
 REM ============================================
 echo.
-echo [5/9] Setting up Python virtual environment...
+echo [4/7] Setting up Python virtual environment...
 
 if exist "comfyui_venv" (
     echo Virtual environment already exists
@@ -235,10 +188,10 @@ if errorlevel 1 (
 echo OK: Virtual environment activated
 
 REM ============================================
-REM Step 6: Install PyTorch XPU Nightly
+REM Step 5: Install PyTorch XPU Nightly
 REM ============================================
 echo.
-echo [6/9] Installing PyTorch XPU Nightly ^(latest bleeding-edge^)...
+echo [5/7] Installing PyTorch XPU Nightly ^(latest bleeding-edge^)...
 echo This is NEWER than Intel's official 2.5.1 builds!
 echo.
 
@@ -268,10 +221,10 @@ echo Verifying PyTorch XPU installation...
 python -c "import torch; print('='*60); print('PyTorch:', torch.__version__); print('XPU Available:', hasattr(torch, 'xpu') and torch.xpu.is_available()); print('='*60)"
 
 REM ============================================
-REM Step 7: Install ComfyUI Dependencies
+REM Step 6: Install ComfyUI Dependencies
 REM ============================================
 echo.
-echo [7/9] Installing ComfyUI dependencies...
+echo [6/7] Installing ComfyUI dependencies...
 
 pip install -r requirements.txt
 
@@ -280,28 +233,13 @@ if errorlevel 1 (
     echo ComfyUI may still work, but some features could be missing
 )
 
+
+
 REM ============================================
-REM Step 8: Install Triton XPU
+REM Step 7: Finalize Installation
 REM ============================================
 echo.
-echo [8/9] Installing Triton XPU for GGUF acceleration...
-
-if "%MSVC_FOUND%"=="1" (
-    pip install pytorch-triton-xpu
-
-    echo.
-    echo Verifying Triton installation...
-    python -c "try: import triton; print('Triton:', triton.__version__); except: print('Triton: Installation pending - will compile on first use')"
-) else (
-    echo Skipping Triton ^(no C++ compiler found^)
-    echo You can install it later after installing Visual Studio Build Tools
-)
-
-REM ============================================
-REM Step 9: Finalize Installation
-REM ============================================
-echo.
-echo [9/9] Finalizing installation...
+echo [7/7] Finalizing installation...
 
 echo Installing ComfyUI frontend...
 pip install --upgrade comfyui-frontend-package
@@ -337,9 +275,8 @@ echo Next Steps:
 echo ================================================================
 echo.
 echo   1. INSTALL_Custom_Nodes.bat    - Install essential custom nodes
-echo   2. INSTALL_GGUF_Triton_Patch.bat - Enable GGUF acceleration
-echo   3. Copy models to: C:\ComfyUI\models\checkpoints\
-echo   4. START_ComfyUI.bat            - Launch ComfyUI
+echo   2. Copy models to: C:\ComfyUI\models\checkpoints\
+echo   3. START_ComfyUI.bat            - Launch ComfyUI
 echo.
 echo Installation directory: C:\ComfyUI
 echo.
